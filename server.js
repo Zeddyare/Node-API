@@ -1,26 +1,20 @@
 import express from 'express';
+import router from './routes.js';
 
 const port = process.env.PORT || 3000;
 const app = express();
 
-//Middleware
+// Middleware
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
+
 app.use(express.static('public'));
 
-//Routes and endpoints
-app.get('/', (req, res) => {
-  res.send('Home Page');
-});
+// Routes
+app.use('/api/shows', router);
 
-app.get('/hello', (req, res) => {
-  res.send('Hello Express!');
-});
-
-app.get('/goodbye', (req, res) => {
-  res.send('Farewell');
-});
-
+// Start server
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
