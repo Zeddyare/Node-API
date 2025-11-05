@@ -12,9 +12,11 @@ app.use(express.static('public'));
 app.get('/', (req, res) => {
   res.send('Home Page');
 });
+
 app.get('/hello', (req, res) => {
   res.send('Hello Express!');
 });
+
 app.get('/goodbye', (req, res) => {
   res.send('Farewell');
 });
