@@ -1,0 +1,24 @@
+{
+  "name": "biggus-api",
+  "version": "1.0.0",
+  "description": "API for app",
+  "homepage": "https://github.com/Zeddyare/Node-API#readme",
+  "bugs": {
+    "url": "https://github.com/Zeddyare/Node-API/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zeddyare/Node-API.git"
+  },
+  "license": "ISC",
+  "author": "Zac Rudolf",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
