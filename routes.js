@@ -1,28 +1,47 @@
 import express from 'express';
+import sql from 'mssql';
 
 const router = express.Router();
-
+const connectString = process.env.DB_CONNECTION_STRING
 // GET: /api/photos/
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   
-  // create some sample photo data
-  const shows = [
-    { id: 1, title: 'Sunset', description: 'Beautiful sunset over the hills' },
-    { id: 2, title: 'Mountain', description: 'Majestic mountain range' },
-    { id: 3, title: 'Ocean', description: 'Calm ocean waves' },
-  ];
+    //Connection to DB
+    await sql.connect(connectString);
   
-  res.json(shows);
+    //Query to collect and join information from DB
+    const result = await sql.query`select a.Id, a.ShowTitle, a.Venue, a.Owner, a.AirDate, a.PostedDate, a.PhotoPath, b.Id as CategoryID, b.Title as Type
+    from [dbo].[Show] a 
+    INNER JOIN [dbo].[Category] b
+    ON a.CategoryId = b.Id 
+    ORDER BY a.PostedDate ASC;` //Grabs all data
+    
+    //Returns results as JSON
+    res.json(result.recordset);
   
 });
 
 // GET: /api/photos/1
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const id = req.params.id;
-  
-  const show = {id: id, title: "Sample", description: "Sample"};
+  await sql.connect(connectString);
 
-  res.json(show)
+  if (id == null || isNaN(id)){
+    res.result("Invalid ID")
+  }
+  
+  const show = await sql.query`select a.Id, a.ShowTitle, a.Venue, a.Owner, a.AirDate, a.PostedDate, a.PhotoPath, b.Id as CategoryID, b.Title as Type
+    from [dbo].[Show] a 
+    INNER JOIN [dbo].[Category] b
+    ON a.CategoryId = b.Id 
+    WHERE a.Id = ${id};`;
+    console.dir(show)
+
+    if (result.recordset.length === 0){
+        res.result("Show not found")
+    } else {
+    res.json(show);
+    }
 });
 
 export default router;
