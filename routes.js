@@ -1,58 +1,79 @@
 import express from 'express';
 import sql from 'mssql';
-import 'dotenv/config';
 
 const router = express.Router();
-const connectString = process.env.DB_CONNECTION_STRING
-// GET: /api/photos/
-router.get('/', async (req, res) => {
 
-  
-    //Connection to DB
+// GET: /api/shows/
+router.get('/', async (req, res) => {
+  try {
+    const connectString = process.env.DB_CONNECTION_STRING;
     await sql.connect(connectString);
   
-    //Query to collect and join information from DB
-    const result = await sql.query`select a.Id, a.ShowTitle, a.Venue, a.Owner, a.AirDate, a.PostedDate, a.PhotoPath, b.Id as CategoryID, b.Title as Type
+    const show = await sql.query`select a.Id, a.ShowTitle, a.Venue, a.Owner, a.AirDate, a.PostedDate, a.PhotoPath, b.Id as CategoryID, b.Title as Type
     from [dbo].[Show] a 
     INNER JOIN [dbo].[Category] b
     ON a.CategoryId = b.Id 
-    ORDER BY a.PostedDate ASC;` //Grabs all data
+    ORDER BY a.PostedDate ASC;`;
     
-    //Returns results as JSON
-    res.json(result.recordset);
+    res.json(show.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// GET: /api/photos/1
+// GET: /api/shows/:id
 router.get('/:id', async (req, res) => {
-  const id = req.params.id;
-  await sql.connect(connectString);
+  try {
+    const id = parseInt(req.params.id);
+  
+    if (isNaN(id)) {
+      return res.status(400).send("Invalid ID");
+    }
 
-  if (id == null || isNaN(id)){
-    res.status(400).send("Invalid ID")
-  }
-  const show = await sql.query`select a.Id, a.ShowTitle, a.Venue, a.Owner, a.AirDate, a.PostedDate, a.PhotoPath, b.Id as CategoryID, b.Title as Type
+    const connectString = process.env.DB_CONNECTION_STRING;
+    await sql.connect(connectString);
+
+    const show = await sql.query`select a.Id, a.ShowTitle, a.Venue, a.Owner, a.AirDate, a.PostedDate, a.PhotoPath, b.Id as CategoryID, b.Title as Type
     from [dbo].[Show] a 
     INNER JOIN [dbo].[Category] b
     ON a.CategoryId = b.Id 
     WHERE a.Id = ${id};`;
 
-    if (result.recordset.length === 0){
-        res.status(404).json({ message: 'Show not found.'});
-    } else {
-    res.json(show);
+    if (show.recordset.length === 0) {
+      return res.status(404).json({ message: 'Show not found.' });
     }
+    
+    res.json(show.recordset[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// router.post('/', async (req, res) => {
-//   const show = req.body;
+// POST: /api/shows/
+router.post('/', async (req, res) => {
+  try {
+    console.log('POST body received:', req.body); // Debug log
+    
+    const customer = req.body;
 
-//   await sql.connect(connectString);
+    if (!customer || !customer.FirstName || !customer.LastName || !customer.Email || !customer.PhoneNumber) {
+      return res.status(400).json({ message: 'Missing required fields: FirstName, LastName, Email, PhoneNumber' });
+    }
 
-//   const result = await sql.query`INSERT INTO [dbo].[Ticket]
-//   (Body, Author, PostedDate, ShowID)
-//   VALUES
-//   (${show.Body}, ${show.Author}, GETDATE(), 
-//   ${show.ShowId})`;
-// });
+    const connectString = process.env.DB_CONNECTION_STRING;
+    await sql.connect(connectString);
+
+    await sql.query`INSERT INTO [dbo].[Customer]
+    (FirstName, LastName, Email, PhoneNumber, ticketCount, cardNumber, cvv, expiry, ShowId)
+    VALUES
+    (${customer.FirstName}, ${customer.LastName}, ${customer.Email}, ${customer.PhoneNumber}, 
+    ${customer.ticketCount || null}, ${customer.cardNumber || null}, ${customer.cvv || null}, 
+    ${customer.expiry || null}, ${customer.ShowId || null})`;
+
+    res.status(201).json({ message: 'Customer created successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 export default router;
